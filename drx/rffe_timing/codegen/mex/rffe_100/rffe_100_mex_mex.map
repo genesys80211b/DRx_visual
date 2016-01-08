@@ -1,0 +1,13 @@
+MEX {
+	global:
+		mexFunction;
+		emlrtMexFcnProperties;
+		rffe_100;
+		emlrtGetRootTLSGlobal;
+		emlrtLockerFunction;
+		rffe_100_initialize;
+		rffe_100_terminate;
+		rffe_100_atexit;
+	local:
+		*;
+};

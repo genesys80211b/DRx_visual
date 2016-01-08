@@ -1,0 +1,14 @@
+MEX {
+	global:
+		mexFunction;
+		emlrtMexFcnProperties;
+		rffe_test;
+		asr_s32;
+		emlrtGetRootTLSGlobal;
+		emlrtLockerFunction;
+		rffe_test_initialize;
+		rffe_test_terminate;
+		rffe_test_atexit;
+	local:
+		*;
+};

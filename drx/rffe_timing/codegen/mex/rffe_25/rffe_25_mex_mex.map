@@ -1,0 +1,14 @@
+MEX {
+	global:
+		mexFunction;
+		emlrtMexFcnProperties;
+		rffe_25;
+		asr_s32;
+		emlrtGetRootTLSGlobal;
+		emlrtLockerFunction;
+		rffe_25_initialize;
+		rffe_25_terminate;
+		rffe_25_atexit;
+	local:
+		*;
+};
