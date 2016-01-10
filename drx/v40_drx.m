@@ -261,7 +261,7 @@ function [dfl,flg,nrb,rbs,sr] = drx_1ReceiveDATA(df,ft,sr)
 % Setting global variables
 global halfUsrpFrameLength numUsrpBits doubleUsrpFrameLength ...
     numMpduBits numMacHdrBits numFcsBits numSuperBits numSuperFrameBits ...
-    addressTx aip vm
+    addressTx aip vm numPayloadBits
 
 % Persistent Data: Maintained between function calls to drx_1ReceiveData
 % chf: Header Frame Count: Counts #USRP frames that have header info (0-2)
@@ -304,7 +304,7 @@ end % END IF ISEMPTY(HCD)
 if isempty(i1b),    i1b = uint8(1);                 end
 if isempty(i1s),    i1s = uint16(1);                end
 if isempty(nmb),    nmb = uint16(numMpduBits+numSuperBits);      end
-if isempty(npf),    npf = uint8(ceil((nmb-numUsrpBits)/numUsrpBits));               end
+if isempty(npf),    npf = uint8(ceil((nmb-(numMacHdrBits))/numUsrpBits));               end
 if isempty(rb),     rb  = complex(zeros(doubleUsrpFrameLength,1));   end
 % Local Function Data: Overwritten on every call to drx_1ReceiveData
 cra = zeros(41,1);
@@ -320,7 +320,7 @@ flg = logical(false(1,6));
 flt = logical(false(1,1)); %#ok<NASGU>
 ips = uint16(0); %#ok<NASGU>
 nrb = uint16(0);
-rbs = zeros(numMacHdrBits,1);
+rbs = zeros(numUsrpBits,1);
 if (ft)
     release(hcd);
     %clear('hcd'); % Not supported for code generation
@@ -401,7 +401,7 @@ else
                     chf = chf-uint8(1);
                 end
                 % Calculate number of Payload Frames from MPDU length
-                npf = ceil((nmb-numUsrpBits)/numUsrpBits);
+                npf = ceil((nmb-(numMacHdrBits))/numUsrpBits);
             elseif (chf==uint8(2)) %prm.NumHeaderFrames
                 % Process frame control in MAC Header
                 if isequal(dfb(i1b:(i1b+15),1),[0;0;1;0;0;0;0;0;0;0;0;0;0;0;0;0])
@@ -421,9 +421,6 @@ else
                     flg(1,4) = logical(true(1));
                     % Pass back Sequence Number in Flagged Data, dfl
                     dfl = uint16(n8f);
-              
-%                     sr  = uint8(213); %prm.DRxStateRxGetPayload
-                    
                 else
                     % Set flag #6: ffc true when MAC Frame Control ~DATA
                     flg(1,6) = logical(true(1));
@@ -449,10 +446,11 @@ else
                     fprintf(1,'To Address read out from DATA: 192.168.%s \n',addressRxString);
                     fprintf(1,'From Address read out from DATA: 192.168.%s \n',addressTxString);
                 end
-                
                 %if packet is addressed to this receiver
                 if addressRx == aip
-                    sr  = uint8(213); %prm.DRxStateRxGetPayload
+%                     sr  = uint8(213); %prm.DRxStateRxGetPayload
+                    rbs(1:numUsrpBits) = dfb(i1b:(i1b+numUsrpBits-1));
+                    nrb = uint16(numUsrpBits);
                 else
                     if (vm), fprintf('Wrong MAC Address, Resetting to Detect Preamble..\n'); end
                     % Set flag #6: ffc true when MAC Frame Control ~DATA
@@ -466,16 +464,26 @@ else
                     rb(1:doubleUsrpFrameLength) = complex(zeros(doubleUsrpFrameLength,1));
                 end
                 
+                %pass back Address3 frame
+            elseif (chf==uint8(4))
+                rbs(1:numUsrpBits) = dfb(i1b:(i1b+numUsrpBits-1));
+                nrb = uint16(numUsrpBits);
+                %pass back Sequence Control + Address4 + beginning of Payload
+            elseif (chf==uint8(5))
+                rbs(1:numUsrpBits) = dfb(i1b:(i1b+numUsrpBits-1));
+                nrb = uint16(numUsrpBits);
+                %move to GetPayload state
+                sr  = uint8(213); %prm.DRxStateRxGetPayload
+                
             end % END IF CH==#
             
         elseif (sr==uint8(213)) %prm.DRxStateRxGetPayload
-                
             % Update Payload Frame Count
             cpf = cpf+uint8(1);
             if (cpf<npf) %prm.NumPayloadFrames
                 % Store All Payload Bits in rbs and update bit count nrb
                 nrb = uint16(numUsrpBits);
-                rbs(1:numUsrpBits) = dfb(i1b:(i1b+numUsrpBits-1));     
+                rbs(1:numUsrpBits) = dfb(i1b:(i1b+numUsrpBits-1));
             else  % On last payload frame for this 802.11b frame, 
                 % Calculate #bits to return from remainder after division
                 % of #MPDU bits by 64 bits/USRPframe
