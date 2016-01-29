@@ -8,7 +8,7 @@ global spreadFactor numPayloadBits numMpduBits numUsrpBits numMacHdrBits usrpFra
     txGain rxGain centerFreqTx centerFreqRx decFactor vm
 
 % vm: Verbose Mode: Displays additional text describing DRx actions
-vm  = logical(true(1));
+vm  = logical(false(1));
 
 % adcRate: ADC Rate
 adcRate = 100e6; 

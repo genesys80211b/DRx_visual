@@ -1,4 +1,4 @@
-function showData( choice, nib, rib )
+function showData_old( choice, nib, rib )
 %showData Displays received data stream
 %   Depending on 'choice,' displays binary stream or received image
 
