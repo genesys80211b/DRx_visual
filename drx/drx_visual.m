@@ -180,7 +180,7 @@ while (~fe)
             cni = uint16(0);
             
             %displaying image for each packet received
-            showData_new(choice, nib, rib);
+            showData(choice, nib, rib);
             
             %COMMENTED OUT exiting condition for complete image transfer
 %             if (nib{1} >= ril{1} && nib{2} >= ril{2})
